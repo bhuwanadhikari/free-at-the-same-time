@@ -1,0 +1,44 @@
+{
+  "name": "freeatthesametime",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:emu": "vite --mode emulator",
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-freeatthesametime",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-freeatthesametime \"vitest run --config vitest.rules.config.ts\"",
+    "test:all": "npm test && npm run test:rules",
+    "icons": "node scripts/generate-icons.mjs",
+    "deploy": "npm run build && firebase deploy --only hosting,firestore"
+  },
+  "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+    "firebase": "^13.0.0",
+    "lucide-react": "^1.53.0",
+    "luxon": "^3.7.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router": "^7.18.4"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "@types/luxon": "^3.7.6",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "sharp": "^0.35.5",
+    "sharp-ico": "^0.1.5",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.3",
+    "workbox-window": "^7.4.1"
+  }
+}

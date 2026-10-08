@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "pushtest-c5ef5"
+  },
+  "targets": {
+    "pushtest-c5ef5": {
+      "hosting": {
+        "app": ["freeatthesametime"]
+      }
+    }
+  }
+}

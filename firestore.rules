@@ -1,0 +1,182 @@
+rules_version = '2';
+
+// Deny by default: anything not matched below is rejected.
+// Client-side match results are never trusted for authorization.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function hasExactly(required, optional) {
+      return incoming().keys().hasAll(required)
+        && incoming().keys().hasOnly(required.concat(optional));
+    }
+    function isText(v, maxLen) {
+      return v is string && v.size() <= maxLen && v.trim().size() > 0;
+    }
+    // Single-line text: no control characters (tabs, newlines, etc.).
+    function isLine(v, maxLen) {
+      return isText(v, maxLen) && !v.matches('(?s).*[\\x00-\\x1f\\x7f].*');
+    }
+    function isUid(v) {
+      return v is string && v.matches('^[A-Za-z0-9_-]{1,128}$');
+    }
+
+    // ---------- public profiles: display name only ----------
+    match /profiles/{uid} {
+      // Fetch by id only; listing (downloading all users) is not allowed.
+      allow get: if signedIn();
+      allow create: if isSelf(uid)
+        && hasExactly(['displayName', 'createdAt', 'updatedAt'], [])
+        && isLine(incoming().displayName, 40)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSelf(uid)
+        && hasExactly(['displayName', 'createdAt', 'updatedAt'], [])
+        && isLine(incoming().displayName, 40)
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+    }
+
+    // ---------- private settings: owner only ----------
+    match /settings/{uid} {
+      function validSettings() {
+        return hasExactly(['timezone', 'createdAt', 'updatedAt'], ['publishConsentAt'])
+          && isLine(incoming().timezone, 64)
+          && (!('publishConsentAt' in incoming()) || incoming().publishConsentAt is timestamp);
+      }
+      allow get: if isSelf(uid);
+      allow create: if isSelf(uid) && validSettings()
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSelf(uid) && validSettings()
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+    }
+
+    // ---------- availability: one doc per user per local date ----------
+    match /availability/{entryId} {
+      function readable() {
+        return signedIn() && (existing().published == true || existing().uid == request.auth.uid);
+      }
+      function validRange(r, d) {
+        return r is map
+          && r.keys().hasAll(['start', 'end', 'startAt', 'endAt'])
+          && r.keys().hasOnly(['start', 'end', 'startAt', 'endAt'])
+          && r.start is string && r.start.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && r.end is string && r.end.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && r.startAt is timestamp && r.endAt is timestamp
+          && r.startAt < r.endAt
+          && r.endAt <= r.startAt + duration.value(26, 'h')
+          && r.startAt >= d.startAt && r.endAt <= d.endAt;
+      }
+      function rangeOk(d, i) {
+        return d.ranges.size() <= i || validRange(d.ranges[i], d);
+      }
+      function validAvailability() {
+        let d = incoming();
+        return signedIn()
+          && hasExactly(['uid', 'date', 'tz', 'kind', 'ranges', 'startAt', 'endAt', 'published', 'updatedAt'], [])
+          && d.uid == request.auth.uid
+          && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && entryId == request.auth.uid + '_' + d.date
+          && isLine(d.tz, 64)
+          && d.published is bool
+          && d.startAt is timestamp && d.endAt is timestamp
+          && d.startAt < d.endAt
+          && d.endAt <= d.startAt + duration.value(50, 'h')
+          && d.endAt > request.time
+          && d.startAt < request.time + duration.value(100, 'd')
+          && d.updatedAt == request.time
+          && d.ranges is list
+          && ((d.kind == 'flexible' && d.ranges.size() == 0)
+            || (d.kind == 'hours' && d.ranges.size() >= 1 && d.ranges.size() <= 4
+              && rangeOk(d, 0) && rangeOk(d, 1) && rangeOk(d, 2) && rangeOk(d, 3)));
+      }
+
+      allow get: if readable();
+      // Queries must be bounded; only published entries (or your own) can match.
+      allow list: if readable() && request.query.limit <= 300;
+      allow create: if validAvailability();
+      allow update: if signedIn() && existing().uid == request.auth.uid && validAvailability();
+      allow delete: if signedIn() && existing().uid == request.auth.uid;
+    }
+
+    // ---------- groups: membership lives on the group doc ----------
+    match /groups/{groupId} {
+      function isMember() {
+        return signedIn() && request.auth.uid in existing().memberIds;
+      }
+      // Each member must be a real user with a profile. At most 10 exists() calls,
+      // which is the per-request limit for a single-document write.
+      function memberOk(m, i) {
+        return m.size() <= i
+          || (isUid(m[i]) && exists(/databases/$(database)/documents/profiles/$(m[i])));
+      }
+      function validNewGroup() {
+        let d = incoming();
+        let m = d.memberIds;
+        return signedIn()
+          && hasExactly(['name', 'createdBy', 'memberIds', 'originalMemberIds', 'createdAt', 'lastMessageAt'], [])
+          && isLine(d.name, 60)
+          && d.createdBy == request.auth.uid
+          && m is list && m.size() >= 2 && m.size() <= 10
+          && request.auth.uid in m
+          && m.toSet().size() == m.size()
+          && d.originalMemberIds == m
+          && d.createdAt == request.time
+          && d.lastMessageAt == request.time
+          && memberOk(m, 0) && memberOk(m, 1) && memberOk(m, 2) && memberOk(m, 3) && memberOk(m, 4)
+          && memberOk(m, 5) && memberOk(m, 6) && memberOk(m, 7) && memberOk(m, 8) && memberOk(m, 9);
+      }
+      // A member may remove exactly themselves and touch nothing else.
+      // Membership can only shrink, so nobody can be added or re-added later.
+      function isSelfRemoval() {
+        let before = existing().memberIds;
+        let after = incoming().memberIds;
+        return incoming().diff(existing()).affectedKeys().hasOnly(['memberIds'])
+          && after is list
+          && after.size() == before.size() - 1
+          && !(request.auth.uid in after)
+          && before.hasAll(after)
+          && after.toSet().size() == after.size();
+      }
+      // Sending a message bumps lastMessageAt so the chat list can sort.
+      function isActivityBump() {
+        return incoming().diff(existing()).affectedKeys().hasOnly(['lastMessageAt'])
+          && incoming().lastMessageAt == request.time;
+      }
+
+      allow get: if isMember();
+      allow list: if isMember() && request.query.limit <= 100;
+      allow create: if validNewGroup();
+      allow update: if isMember() && (isSelfRemoval() || isActivityBump());
+
+      match /messages/{messageId} {
+        function isGroupMember() {
+          return signedIn()
+            && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+        }
+        allow get: if isGroupMember();
+        allow list: if isGroupMember() && request.query.limit <= 50;
+        allow create: if isGroupMember()
+          && hasExactly(['senderId', 'text', 'createdAt'], [])
+          && incoming().senderId == request.auth.uid
+          && isText(incoming().text, 2000)
+          && incoming().createdAt == request.time;
+        // Messages are immutable: no update or delete.
+      }
+    }
+  }
+}
