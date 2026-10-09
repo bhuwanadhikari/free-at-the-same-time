@@ -1,0 +1,30 @@
+# Free at the Same Time
+
+> Free at the Same Time (https://freeatthesametime.web.app/) is a free web app for finding people who are free at the same time as you. You mark the hours you are free, the app shows everyone whose free time overlaps with yours, and you can open a group chat with the people you pick to make plans. It works in any modern browser and installs as an app on iPhone, Android and desktop.
+
+## What it does
+
+- **Mark your free time:** pick a day and tap or drag the hours you are free, or tick "I am free whole day". Free time can repeat weekly (for example every Friday 3–4 PM) across a 90-day planning horizon.
+- **See who is free at the same time:** the Matches calendar shows how many people overlap with you on each day. A day's timeline lists you first, then everyone who shares at least one free hour with you, in your own time zone. Overlaps must be at least 30 minutes.
+- **Pick people and hours:** tapping shared hours builds a match. The app recalculates the time that works for every selected person at once (pairwise overlaps do not imply a group overlap). If someone only said "free whole day", the time is labelled as needing confirmation.
+- **Open a group chat:** groups have 2–10 members including you. Everyone joins immediately, chats are plain text (links allowed, up to 2,000 characters per message) and update in real time. Anyone can leave a group at any time; nobody can be added after a group is created.
+
+## Key facts
+
+- Price: free to use; no subscription, no ads.
+- Platforms: web app (progressive web app) at https://freeatthesametime.web.app/. Installable on Android (Chrome/Edge: Install app), iPhone and iPad (Share → Add to Home Screen) and desktop Chrome/Edge. No app-store download needed.
+- Sign-in: Google account only.
+- Privacy: other signed-in users see only your chosen display name and the availability you publish. Email addresses are never shown or stored with profiles. Users agree before availability is first published.
+- Time zones: each entry stores its IANA time zone and exact instants; daylight-saving days are handled.
+- Limitations: no push notifications while the app is closed; matches and chats update only while it is open. Published availability is visible to all signed-in users, by design.
+- Language: English.
+
+## How it compares
+
+Scheduling polls such as When2meet and Doodle start with an organizer creating an event and inviting a fixed list of people. Free at the Same Time works the other way round: each person marks their own free time once, and the app shows who is already free at the same time, with a group chat built in. It suits spontaneous plans ("who's free tonight?") as well as recurring ones (study groups, gaming sessions, sports, calls across time zones).
+
+## Links
+
+- [Home page](https://freeatthesametime.web.app/): overview, how it works, features and FAQ
+- [Open the app](https://freeatthesametime.web.app/availability): sign in with Google and mark your free time
+- [FAQ](https://freeatthesametime.web.app/#faq): common questions about pricing, privacy, time zones and group chats

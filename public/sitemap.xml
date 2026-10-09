@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://freeatthesametime.web.app/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <image:image><image:loc>https://freeatthesametime.web.app/og-image.jpg</image:loc></image:image>
+    <image:image><image:loc>https://freeatthesametime.web.app/images/matches-880.webp</image:loc></image:image>
+    <image:image><image:loc>https://freeatthesametime.web.app/images/availability-880.webp</image:loc></image:image>
+    <image:image><image:loc>https://freeatthesametime.web.app/images/group-chat-sheet-880.webp</image:loc></image:image>
+    <image:image><image:loc>https://freeatthesametime.web.app/images/chat-880.webp</image:loc></image:image>
+  </url>
+</urlset>

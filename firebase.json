@@ -8,7 +8,14 @@
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "cleanUrls": true,
-    "rewrites": [{ "source": "**", "destination": "/index.html" }],
+    "rewrites": [
+      { "source": "/availability", "destination": "/app.html" },
+      { "source": "/matches", "destination": "/app.html" },
+      { "source": "/chats", "destination": "/app.html" },
+      { "source": "/chats/**", "destination": "/app.html" },
+      { "source": "/profile", "destination": "/app.html" },
+      { "source": "/profile/**", "destination": "/app.html" }
+    ],
     "headers": [
       {
         "source": "**",
@@ -22,6 +29,18 @@
       {
         "source": "/assets/**",
         "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      },
+      {
+        "source": "/images/**",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+      },
+      {
+        "source": "/@(robots.txt|sitemap.xml|llms.txt|og-image.jpg)",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+      },
+      {
+        "source": "/llms.txt",
+        "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
       }
     ]
   },

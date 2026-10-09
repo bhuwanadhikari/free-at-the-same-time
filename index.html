@@ -2,21 +2,554 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
-    <title>freeatthesametime.com</title>
-    <meta name="description" content="Find people who are free at the same time and start a group chat to make plans." />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <script>
+      // Installed app launched from an old home-screen icon: go straight to the app.
+      if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) location.replace('/availability');
+    </script>
+    <title>Free at the Same Time – See who’s free when you are &amp; make plans</title>
+    <meta
+      name="description"
+      content="Mark the hours you’re free, instantly see everyone who’s free at the same time, and open a group chat to make plans. Free web app for iPhone, Android and desktop."
+    />
+    <link rel="canonical" href="https://freeatthesametime.web.app/" />
+    <meta name="google-site-verification" content="l8mJKEB_Ej9O--z9JXhOAQfNgghmQBs51DwxVO0C48k" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="theme-color" content="#5B2EFF" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="application-name" content="Free at the Same Time" />
+    <meta name="apple-mobile-web-app-title" content="FreeAtSameTime" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="FreeAtSameTime" />
+    <link rel="alternate" type="text/markdown" title="LLM-friendly summary" href="/llms.txt" />
+
+    <!-- Open Graph / social previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Free at the Same Time" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://freeatthesametime.web.app/" />
+    <meta property="og:title" content="Free at the Same Time – See who’s free when you are" />
+    <meta property="og:description" content="Mark your free hours, see who overlaps, and start a group chat to make plans. Free on iPhone, Android and desktop." />
+    <meta property="og:image" content="https://freeatthesametime.web.app/og-image.jpg" />
+    <meta property="og:image:secure_url" content="https://freeatthesametime.web.app/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The Free at the Same Time app showing a matches timeline and a group chat" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Free at the Same Time – See who’s free when you are" />
+    <meta name="twitter:description" content="Mark your free hours, see who overlaps, and start a group chat to make plans." />
+    <meta name="twitter:image" content="https://freeatthesametime.web.app/og-image.jpg" />
+    <meta name="twitter:image:alt" content="The Free at the Same Time app showing a matches timeline and a group chat" />
+
+    <link rel="preload" as="image" type="image/webp" href="/images/matches-880.webp" imagesrcset="/images/matches-440.webp 440w, /images/matches-880.webp 880w" imagesizes="(min-width: 960px) 300px, 260px" fetchpriority="high" />
+    <link rel="stylesheet" href="/src/landing/landing.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://freeatthesametime.web.app/#website",
+            "url": "https://freeatthesametime.web.app/",
+            "name": "Free at the Same Time",
+            "alternateName": ["freeatthesametime", "Free At Same Time"],
+            "description": "A free web app for finding people who are free at the same time as you and starting a group chat to make plans.",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://freeatthesametime.web.app/#app",
+            "name": "Free at the Same Time",
+            "url": "https://freeatthesametime.web.app/",
+            "applicationCategory": "SocialNetworkingApplication",
+            "applicationSubCategory": "Group scheduling and availability matching",
+            "operatingSystem": "Any (web browser); installable on Android, iOS, Windows, macOS and ChromeOS",
+            "browserRequirements": "Requires JavaScript and a modern browser such as Chrome, Safari, Edge or Firefox",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Mark the hours you are free, see everyone whose free time overlaps with yours on a timeline, pick people and hours, and open a plain-text group chat to make plans.",
+            "featureList": [
+              "Tap or drag to mark free hours, or mark a whole day as free",
+              "Weekly repeating availability",
+              "Matches timeline showing everyone free at the same time as you",
+              "Group overlap calculated across every member at once",
+              "Group chats with 2 to 10 people",
+              "Time-zone and daylight-saving aware",
+              "Sign in with Google; your email is never shown to others",
+              "Installable progressive web app for iPhone, Android and desktop"
+            ],
+            "screenshot": [
+              "https://freeatthesametime.web.app/images/matches-880.webp",
+              "https://freeatthesametime.web.app/images/availability-880.webp",
+              "https://freeatthesametime.web.app/images/chat-880.webp"
+            ],
+            "image": "https://freeatthesametime.web.app/og-image.jpg",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://freeatthesametime.web.app/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is Free at the Same Time?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Free at the Same Time is a free web app that shows you who is free when you are. You mark the hours you are free, the app lines you up with everyone whose free time overlaps, and you can open a group chat with the people you pick to make a plan." }
+              },
+              {
+                "@type": "Question",
+                "name": "Is Free at the Same Time free to use?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is free to use, with no subscription and no ads. You only need a Google account to sign in." }
+              },
+              {
+                "@type": "Question",
+                "name": "Do I need to download an app?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. It runs in your browser at freeatthesametime.web.app. You can also install it to your home screen as an app: on Android, Chrome or Edge use Install app; on iPhone or iPad use Share, then Add to Home Screen." }
+              },
+              {
+                "@type": "Question",
+                "name": "How does the app find people who are free at the same time?",
+                "acceptedAnswer": { "@type": "Answer", "text": "For each day you mark, the app compares your free hours with everyone else's published free hours and keeps overlaps of at least 30 minutes. The Matches timeline lists you first, then everyone who shares at least one hour with you. When you choose several people, it recalculates the time that works for all of them at once, because two people overlapping with you does not mean they overlap with each other." }
+              },
+              {
+                "@type": "Question",
+                "name": "Who can see my availability?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Other signed-in users can see your chosen display name and the free time you publish. Your email address is never shown or stored with your profile. You are asked to agree before your availability is published for the first time." }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I set availability that repeats every week?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can make a block of free time repeat weekly, for example every Friday from 3 PM to 4 PM. Changing a single date later does not affect the rest of the series." }
+              },
+              {
+                "@type": "Question",
+                "name": "Does it work across time zones?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Every entry is saved with its time zone, so overlaps are correct when people are in different cities, and daylight-saving changes are handled. You always see times in your own time zone." }
+              },
+              {
+                "@type": "Question",
+                "name": "How many people can be in a group chat?",
+                "acceptedAnswer": { "@type": "Answer", "text": "A group chat can have 2 to 10 people, including you. Everyone you pick joins immediately, and anyone can leave a group at any time." }
+              },
+              {
+                "@type": "Question",
+                "name": "How is this different from When2meet or Doodle?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Scheduling polls like When2meet and Doodle start with an organizer who creates an event and sends a link to a fixed list of people. Free at the Same Time works the other way round: you mark your free time once, and the app shows you who is already free at the same time, then lets you start a group chat with them. It suits spontaneous plans as much as planned ones." }
+              },
+              {
+                "@type": "Question",
+                "name": "Does Free at the Same Time send notifications?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Not yet. Matches and chats update in real time while the app is open, but there are no push notifications when it is closed." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
-    <noscript>freeatthesametime.com needs JavaScript to run.</noscript>
-    <script type="module" src="/src/main.tsx"></script>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap site-header-inner">
+        <a class="brand" href="/" aria-label="Free at the Same Time home">
+          <img src="/favicon.svg" width="32" height="32" alt="" />
+          <span>Free at the Same Time</span>
+        </a>
+        <nav class="site-nav" aria-label="Page sections">
+          <a href="#how-it-works">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <a class="btn btn-primary btn-sm" href="/availability">Open the app</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Hero -->
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="wrap hero-inner">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Free · No download · Works on any phone</p>
+            <h1 id="hero-title">See who’s <span class="mark">free at the same time</span> as you, and make plans in one tap.</h1>
+            <p class="lede">
+              Mark the hours you’re free. Free at the Same Time lines you up with everyone whose free time overlaps, then lets you open a group chat with the people
+              you pick. No polls, no back-and-forth “when works for you?”.
+            </p>
+            <div class="cta-row">
+              <a class="btn btn-primary btn-lg" href="/availability">
+                Get started free
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </a>
+              <a class="btn btn-ghost btn-lg" href="#how-it-works">See how it works</a>
+            </div>
+            <ul class="trust" aria-label="At a glance">
+              <li>Free, no ads</li>
+              <li>iPhone, Android &amp; desktop</li>
+              <li>Your email is never shown</li>
+            </ul>
+          </div>
+
+          <div class="hero-art">
+            <figure class="phone phone--back">
+              <img
+                src="/images/chat-440.webp"
+                srcset="/images/chat-440.webp 440w, /images/chat-880.webp 880w"
+                sizes="(min-width: 960px) 280px, 220px"
+                width="440"
+                height="738"
+                alt="A group chat called Saturday dinner where four people agree to meet for ramen at 7 PM"
+                decoding="async"
+              />
+            </figure>
+            <figure class="phone phone--front">
+              <img
+                src="/images/matches-880.webp"
+                srcset="/images/matches-440.webp 440w, /images/matches-880.webp 880w"
+                sizes="(min-width: 960px) 300px, 260px"
+                width="440"
+                height="738"
+                alt="The Matches timeline for Saturday, October 10 showing five people free between 5 PM and 10 PM, with 7 to 9 PM selected for a group"
+                fetchpriority="high"
+              />
+            </figure>
+            <p class="hero-tag" aria-hidden="true"><span>✦</span> 4 people free 7–9 PM</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section id="how-it-works" class="section" aria-labelledby="how-title">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="kicker">How it works</p>
+            <h2 id="how-title">From “are you free?” to a plan in three steps</h2>
+            <p>No organizer, no event to set up, no link to chase people with. Everyone marks their own time and the overlaps appear by themselves.</p>
+          </header>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-text">
+                <span class="step-num" aria-hidden="true">1</span>
+                <h3>Mark when you’re free</h3>
+                <p>
+                  Pick a day and tap the hours you’re free, or long-press and drag to select a whole evening. Free all day? Tick one box. Have a standing slot, like
+                  Friday afternoons? Make it repeat every week.
+                </p>
+              </div>
+              <figure class="phone phone--flat">
+                <img
+                  src="/images/availability-440.webp"
+                  srcset="/images/availability-440.webp 440w, /images/availability-880.webp 880w"
+                  sizes="(min-width: 960px) 280px, 240px"
+                  width="440"
+                  height="738"
+                  alt="The Availability screen with Saturday 5 to 10 PM marked as free and a list of upcoming days"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+            </li>
+            <li class="step">
+              <div class="step-text">
+                <span class="step-num" aria-hidden="true">2</span>
+                <h3>See who’s free at the same time</h3>
+                <p>
+                  The Matches calendar shows how many people overlap with you each day. Open a day to see a timeline of everyone who shares your free hours, hour by
+                  hour, in your time zone. Tap the hours and people you want; the app keeps only the time that works for everyone.
+                </p>
+              </div>
+              <figure class="phone phone--flat">
+                <img
+                  src="/images/matches-440.webp"
+                  srcset="/images/matches-440.webp 440w, /images/matches-880.webp 880w"
+                  sizes="(min-width: 960px) 280px, 240px"
+                  width="440"
+                  height="738"
+                  alt="A matches timeline where Maya, Jon and Sara are all free with you from 7 to 9 PM"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+            </li>
+            <li class="step">
+              <div class="step-text">
+                <span class="step-num" aria-hidden="true">3</span>
+                <h3>Open a group chat and make the plan</h3>
+                <p>
+                  Name the chat, check who’s in and when you’re all free, and open it. Everyone joins straight away, so you can settle the where and what in a
+                  plain, simple group chat. Done? Anyone can leave whenever they like.
+                </p>
+              </div>
+              <figure class="phone phone--flat">
+                <img
+                  src="/images/group-chat-sheet-440.webp"
+                  srcset="/images/group-chat-sheet-440.webp 440w, /images/group-chat-sheet-880.webp 880w"
+                  sizes="(min-width: 960px) 280px, 240px"
+                  width="440"
+                  height="738"
+                  alt="The Open a group chat sheet listing four members and the shared time 7:00 to 9:00 PM"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section id="features" class="section section--tint" aria-labelledby="features-title">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="kicker">Features</p>
+            <h2 id="features-title">Everything you need to find a time, nothing you don’t</h2>
+          </header>
+          <ul class="features">
+            <li>
+              <span class="f-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></svg>
+              </span>
+              <h3>Tap or drag your hours</h3>
+              <p>An hour-by-hour planner built for thumbs. Toggle single hours or drag across an evening, and it saves as you go.</p>
+            </li>
+            <li>
+              <span class="f-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></svg>
+              </span>
+              <h3>Weekly repeats</h3>
+              <p>Free every Tuesday evening? Set it once and it fills the next three months. Change one week without touching the rest.</p>
+            </li>
+            <li>
+              <span class="f-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="6" /><circle cx="15" cy="12" r="6" /></svg>
+              </span>
+              <h3>True group overlap</h3>
+              <p>Two friends overlapping with you doesn’t mean they overlap with each other. The app checks everyone at once.</p>
+            </li>
+            <li>
+              <span class="f-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
+              </span>
+              <h3>Time-zone smart</h3>
+              <p>Friends abroad? Times are stored with their time zone and shown in yours, with daylight-saving days handled correctly.</p>
+            </li>
+            <li>
+              <span class="f-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /></svg>
+              </span>
+              <h3>Instant group chats</h3>
+              <p>Pick 1 to 9 people and you’re all in a chat together, with real-time messages and clickable links. Leave anytime.</p>
+            </li>
+            <li>
+              <span class="f-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2" /><path d="M11 18h2" /></svg>
+              </span>
+              <h3>Installs like an app</h3>
+              <p>Add it to your home screen on iPhone, Android, Windows or Mac. It opens full screen and loads fast, with no app store needed.</p>
+            </li>
+            <li>
+              <span class="f-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3Z" /><path d="M9 12l2 2 4-4" /></svg>
+              </span>
+              <h3>Private by default</h3>
+              <p>Others only see the display name you choose and the time you publish. Your email address is never shown to anyone.</p>
+            </li>
+            <li>
+              <span class="f-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" /></svg>
+              </span>
+              <h3>Light and dark</h3>
+              <p>A bright, friendly design that follows your phone’s light or dark setting automatically.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Use cases -->
+      <section class="section" aria-labelledby="uses-title">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="kicker">Made for real life</p>
+            <h2 id="uses-title">Who uses Free at the Same Time?</h2>
+            <p>Anyone tired of a group chat full of “I can do Tuesday… actually no”.</p>
+          </header>
+          <ul class="uses">
+            <li><strong>Friends planning a night out</strong><span>See who’s free Friday evening and turn it into dinner, drinks or a movie.</span></li>
+            <li><strong>Study groups and classmates</strong><span>Find a two-hour window when the whole group can meet before the exam.</span></li>
+            <li><strong>Gaming squads</strong><span>Line up a session when everyone can actually be online at the same time.</span></li>
+            <li><strong>Sports and pickup games</strong><span>Gather enough people for a match without a dozen messages.</span></li>
+            <li><strong>Long-distance friends and family</strong><span>Schedule a call across time zones without doing the maths.</span></li>
+            <li><strong>Clubs, hobbies and side projects</strong><span>Find a slot for the next meetup, rehearsal or work session.</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Comparison -->
+      <section class="section section--tint" aria-labelledby="compare-title">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="kicker">Not another scheduling poll</p>
+            <h2 id="compare-title">Free at the Same Time vs. scheduling polls</h2>
+            <p>Tools like When2meet and Doodle are great for one fixed meeting. Free at the Same Time is built for the everyday “who’s around?”.</p>
+          </header>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th scope="col"><span class="sr-only">Question</span></th>
+                  <th scope="col">Scheduling polls</th>
+                  <th scope="col" class="us">Free at the Same Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">How it starts</th>
+                  <td>An organizer creates an event and shares a link</td>
+                  <td class="us">You mark your free time once</td>
+                </tr>
+                <tr>
+                  <th scope="row">Who you find</th>
+                  <td>Only the people you invited</td>
+                  <td class="us">Everyone who’s free when you are</td>
+                </tr>
+                <tr>
+                  <th scope="row">Spontaneous plans</th>
+                  <td>Slow: wait for everyone to respond</td>
+                  <td class="us">Overlaps are visible straight away</td>
+                </tr>
+                <tr>
+                  <th scope="row">After you find a time</th>
+                  <td>Switch to another app to talk</td>
+                  <td class="us">Group chat built in</td>
+                </tr>
+                <tr>
+                  <th scope="row">Repeating free time</th>
+                  <td>Re-enter it for every poll</td>
+                  <td class="us">Weekly repeats</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Privacy -->
+      <section class="section" aria-labelledby="privacy-title">
+        <div class="wrap privacy">
+          <div>
+            <p class="kicker">Privacy, plainly</p>
+            <h2 id="privacy-title">You decide what people see</h2>
+          </div>
+          <ul class="checks">
+            <li>You sign in with Google, but your <strong>email is never shown</strong> to other people or saved with your profile.</li>
+            <li>Others see only the <strong>display name you pick</strong> and the free time you choose to publish.</li>
+            <li>You’re asked before your availability is published for the first time.</li>
+            <li>People free at the same time can add you to a group chat, and you can <strong>leave any group at any time</strong>.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq" class="section section--tint" aria-labelledby="faq-title">
+        <div class="wrap faq-wrap">
+          <header class="section-head">
+            <p class="kicker">FAQ</p>
+            <h2 id="faq-title">Frequently asked questions</h2>
+          </header>
+          <div class="faq">
+            <details open>
+              <summary><h3>What is Free at the Same Time?</h3></summary>
+              <p>
+                Free at the Same Time is a free web app that shows you who is free when you are. You mark the hours you’re free, the app lines you up with everyone
+                whose free time overlaps, and you can open a group chat with the people you pick to make a plan.
+              </p>
+            </details>
+            <details>
+              <summary><h3>Is Free at the Same Time free to use?</h3></summary>
+              <p>Yes. It’s free to use, with no subscription and no ads. You only need a Google account to sign in.</p>
+            </details>
+            <details>
+              <summary><h3>Do I need to download an app?</h3></summary>
+              <p>
+                No. It runs in your browser at <a href="/availability">freeatthesametime.web.app</a>. You can also install it to your home screen: on Android, Chrome or
+                Edge use <em>Install app</em>; on iPhone or iPad use <em>Share → Add to Home Screen</em>.
+              </p>
+            </details>
+            <details>
+              <summary><h3>How does the app find people who are free at the same time?</h3></summary>
+              <p>
+                For each day you mark, the app compares your free hours with everyone else’s published free hours and keeps overlaps of at least 30 minutes. The
+                Matches timeline lists you first, then everyone who shares at least one hour with you. When you choose several people, it recalculates the time that
+                works for all of them at once, because two people overlapping with you doesn’t mean they overlap with each other.
+              </p>
+            </details>
+            <details>
+              <summary><h3>Who can see my availability?</h3></summary>
+              <p>
+                Other signed-in users can see your chosen display name and the free time you publish. Your email address is never shown or stored with your profile.
+                You’re asked to agree before your availability is published for the first time.
+              </p>
+            </details>
+            <details>
+              <summary><h3>Can I set availability that repeats every week?</h3></summary>
+              <p>Yes. You can make a block of free time repeat weekly, for example every Friday from 3 PM to 4 PM. Changing a single date later doesn’t affect the rest of the series.</p>
+            </details>
+            <details>
+              <summary><h3>Does it work across time zones?</h3></summary>
+              <p>
+                Yes. Every entry is saved with its time zone, so overlaps are correct when people are in different cities, and daylight-saving changes are handled. You
+                always see times in your own time zone.
+              </p>
+            </details>
+            <details>
+              <summary><h3>How many people can be in a group chat?</h3></summary>
+              <p>A group chat can have 2 to 10 people, including you. Everyone you pick joins immediately, and anyone can leave a group at any time.</p>
+            </details>
+            <details>
+              <summary><h3>How is this different from When2meet or Doodle?</h3></summary>
+              <p>
+                Scheduling polls like When2meet and Doodle start with an organizer who creates an event and sends a link to a fixed list of people. Free at the Same
+                Time works the other way round: you mark your free time once, and the app shows you who is already free at the same time, then lets you start a group
+                chat with them. It suits spontaneous plans as much as planned ones.
+              </p>
+            </details>
+            <details>
+              <summary><h3>Does Free at the Same Time send notifications?</h3></summary>
+              <p>Not yet. Matches and chats update in real time while the app is open, but there are no push notifications when it’s closed.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final CTA -->
+      <section class="final" aria-labelledby="final-title">
+        <div class="wrap final-inner">
+          <img src="/favicon.svg" width="64" height="64" alt="" loading="lazy" />
+          <h2 id="final-title">Someone’s free when you are. Go find them.</h2>
+          <p>Set your free hours in under a minute. It’s free and works on any phone or computer.</p>
+          <a class="btn btn-sun btn-lg" href="/availability">Get started free</a>
+
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <a class="brand" href="/">
+          <img src="/favicon.svg" width="28" height="28" alt="" loading="lazy" />
+          <span>Free at the Same Time</span>
+        </a>
+        <nav aria-label="Footer">
+          <a href="#how-it-works">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#faq">FAQ</a>
+          <a href="/availability">Open the app</a>
+        </nav>
+        <p class="fine">© 2026 Free at the Same Time</p>
+      </div>
+    </footer>
   </body>
 </html>

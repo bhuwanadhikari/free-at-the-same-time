@@ -90,7 +90,20 @@ npm run typecheck
 
 ---
 
-## 4. Data model (Cloud Firestore)
+## 4. Landing page and SEO
+
+`/` is a static, pre-rendered landing page (`index.html` + `src/landing/landing.css`, no JavaScript bundle) so search engines and LLM crawlers see real content. The React app lives in `app.html` and is served for the app routes `/availability`, `/matches`, `/chats/**` and `/profile/**`: by the rewrites in `firebase.json` in production, the `appRoutes()` plugin in `vite.config.ts` in dev/preview, and Workbox's `navigateFallbackAllowlist` offline. Add a new top-level app route in all three places.
+
+- `app.html` is `noindex`. Unknown paths get `public/404.html` with a real 404 status.
+- `public/robots.txt` (allows search and AI crawlers), `public/sitemap.xml` and `public/llms.txt` (a plain-language summary for LLMs).
+- Structured data (JSON-LD `WebSite`, `WebApplication`, `FAQPage`) sits in the landing page `<head>`. Keep the FAQ JSON-LD and the visible FAQ in sync.
+- Screenshots in `public/images/` and `public/og-image.jpg` (1200×630) were captured from the emulator with seeded demo people.
+- The installed PWA opens at `/availability` (`start_url`). Launching an older install at `/` redirects there too.
+- Google Search Console: URL-prefix property `https://freeatthesametime.web.app/`, verified by the `google-site-verification` meta tag in `index.html` (keep it, or the property becomes unverified), with `sitemap.xml` submitted.
+- IndexNow (Bing, Yandex, Seznam, Naver): the key file is `public/bb9b00db4a5ff81fd7b2ee609dc7a7b5.txt`. After changing the landing page, ping it with
+  `curl -X POST https://api.indexnow.org/indexnow -H 'Content-Type: application/json' -d '{"host":"freeatthesametime.web.app","key":"bb9b00db4a5ff81fd7b2ee609dc7a7b5","urlList":["https://freeatthesametime.web.app/"]}'`
+
+## 5. Data model (Cloud Firestore)
 
 | Path | Who can read | Who can write | Fields |
 |---|---|---|---|
@@ -123,7 +136,7 @@ published: true, updatedAt: serverTimestamp
 
 **Indexes** (`firestore.indexes.json`): `availability(published, endAt)` for discovery, `availability(uid, endAt)` for your own days, `groups(memberIds array-contains, lastMessageAt desc)` for the chat list.
 
-## 5. How matching works (in the browser)
+## 6. How matching works (in the browser)
 
 1. Load your own upcoming entries (≤ 120).
 2. Query others' **published** entries whose `endAt` falls within your entries' window plus 50 hours (the longest span an entry can cover). The query is ordered by `endAt`, limited to 50 at a time (up to 300), and covers your availability in the **month shown on the calendar**. **Load more** fetches the next page. The UI only says “no one else is free” once the query is exhausted.
@@ -133,7 +146,7 @@ published: true, updatedAt: serverTimestamp
 
 Match results are only a UI aid. Authorization comes entirely from the Security Rules.
 
-## 6. Security Rules summary (`firestore.rules`)
+## 7. Security Rules summary (`firestore.rules`)
 
 Deny by default. The rules enforce:
 - Users edit only their own profile, settings and availability (the document id must be `{uid}_{date}`).
@@ -144,7 +157,7 @@ Deny by default. The rules enforce:
 - Group updates are either (a) **self-removal**: exactly the caller is removed and nothing else changes, or (b) bumping `lastMessageAt` to the server time.
 - Membership can only shrink, so nobody can be added after creation and departed members can't be restored.
 
-## 7. Limitations and free-plan constraints
+## 8. Limitations and free-plan constraints
 
 - **No trusted backend.** Without Cloud Functions, the server can't verify that people added to a group actually matched. Anyone signed in can create a group containing any existing user. The safeguard is that anyone can leave any group at any time. Rate limiting and robust anti-spam are out of scope.
 - **Public by design:** display names and published availability (including each day's time zone) are visible to all signed-in users. Profiles can be fetched by id but not listed. Published availability can be paged through by any signed-in user.
@@ -153,7 +166,7 @@ Deny by default. The rules enforce:
 - Message history and availability are never deleted automatically (past availability simply drops out of queries). Leaving a group doesn't delete your earlier messages; they stay visible to the remaining members.
 - Chats are memory-cached only, so nothing private is persisted to disk. Signing out reloads the app and clears local state.
 
-## 8. Project layout
+## 9. Project layout
 
 ```
 src/lib/          pure logic: intervals, time zones, availability building, hour slots + weekly repeats, matching, links, validation
@@ -161,6 +174,7 @@ src/services/     Firestore access (availability, profiles, groups, messages, er
 src/state/        session, shared listeners, match feed, local "seen" markers, toasts
 src/screens/      Availability (day + hour scrollers), Slot sheet (edit + weekly repeat), Matches (calendar + timeline), Create group, Chats, Chat, Profile, Sign-in, Onboarding
 src/components/   App chrome (top bar, nav), Day scroller, Hour scroller, sheets, shared UI
+src/landing/      landing page stylesheet (index.html is the landing page; app.html is the app shell)
 firestore.rules   Security Rules        firestore.indexes.json   composite indexes
 tests/unit/       Vitest unit tests     tests/rules/             emulator tests for rules + services
 scripts/          icon generation, emulator seeding
