@@ -73,7 +73,7 @@ export function SignInScreen({ authError }: { authError: string | null }) {
             {error}
           </p>
         )}
-        <p className="fine-print">Others only see the display name you choose — never your email.</p>
+        <p className="fine-print">Others only see the display name you choose, never your email.</p>
       </div>
     </main>
   );

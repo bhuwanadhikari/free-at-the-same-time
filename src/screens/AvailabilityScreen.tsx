@@ -364,7 +364,7 @@ export function AvailabilityScreen() {
       <ConfirmDialog
         open={consent !== null}
         title="Before you publish"
-        confirmLabel="I understand — publish"
+        confirmLabel="I understand, publish"
         cancelLabel="Not now"
         busy={consentBusy}
         onConfirm={async () => {

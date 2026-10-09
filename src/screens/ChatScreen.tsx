@@ -311,7 +311,7 @@ export function ChatScreen() {
               </div>
               {o.status === 'failed' ? (
                 <span className="msg-failed" role="alert">
-                  Not sent{o.error ? ` — ${o.error}` : ''}
+                  Not sent{o.error ? `: ${o.error}` : ''}
                   <button type="button" className="link-btn" onClick={() => void attempt(o)} disabled={!online}>
                     <RefreshCw size={13} aria-hidden="true" /> Retry
                   </button>
@@ -337,7 +337,7 @@ export function ChatScreen() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={online ? 'Message' : 'Offline — reconnect to send'}
+          placeholder={online ? 'Message' : 'Offline. Reconnect to send'}
           enterKeyHint="send"
           disabled={access !== 'ok'}
           aria-invalid={overLimit}

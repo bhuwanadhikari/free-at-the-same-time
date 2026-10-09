@@ -125,7 +125,7 @@ export function ProfileScreen() {
           </span>
           {tzError && <p className="error-text">{tzError}</p>}
         </div>
-        <p className="muted small">Signed in with Google as {user.email ?? 'your Google account'} — only you can see this.</p>
+        <p className="muted small">Signed in with Google as {user.email ?? 'your Google account'}. Only you can see this.</p>
       </section>
 
       <InstallCard />

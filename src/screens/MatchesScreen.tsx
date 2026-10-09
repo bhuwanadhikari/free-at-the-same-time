@@ -261,14 +261,14 @@ export function MatchesScreen() {
         {myFreeToday && feed.state === 'loading' && <Spinner label="Finding matches" />}
         {myFreeToday && feed.state === 'ready' && rows.length === 0 && (
           <p className="muted timeline-empty">
-            {complete ? 'No one else is free at the same time yet.' : 'No matches found so far — load more to keep checking.'}
+            {complete ? 'No one else is free at the same time yet.' : 'No matches found so far. Load more to keep checking.'}
           </p>
         )}
         {myFreeToday && rows.length > 0 && !selection && <p className="hint">Tap a shared hour to match. Tap more hours or people to grow it.</p>}
 
         {feed.state === 'ready' && feed.canLoadMore && (
           <div className="load-more">
-            <p className="muted small">These are the first results we checked — more people may be free.</p>
+            <p className="muted small">These are the first results we checked. More people may be free.</p>
             <button type="button" className="btn btn-secondary btn-sm" onClick={feed.loadMore}>
               Load more
             </button>
@@ -370,7 +370,7 @@ function MonthGrid({
                 )}
                 {count > 0 && (
                   <span className="month-stat month-stat--matches">
-                    <Users size={8} strokeWidth={3} />
+                    <Users size={7} strokeWidth={3} />
                     {count}
                   </span>
                 )}

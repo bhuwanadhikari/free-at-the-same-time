@@ -97,7 +97,8 @@ body {
   font-size: 16px;
   line-height: 1.5;
   color: var(--ink);
-  background: var(--bg);
+  /* Black outside the 560px app column, so desktop reads like a phone. */
+  background: #000;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
@@ -205,6 +206,9 @@ code {
 
 #root {
   min-height: 100dvh;
+  max-width: 560px;
+  margin: 0 auto;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
 }
@@ -1692,7 +1696,7 @@ code {
 .month {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 1px;
+  gap: 3px;
 }
 
 .month-wk {
@@ -1711,10 +1715,10 @@ code {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0;
+  gap: 3px;
   border: 0;
   border-radius: var(--box);
-  background: transparent;
+  background: var(--surface-2);
   color: var(--ink);
   transition: background-color 0.2s;
 }
@@ -1740,7 +1744,7 @@ code {
 }
 
 .month-day.has-free {
-  background: color-mix(in srgb, var(--primary-soft) 55%, transparent);
+  background: color-mix(in srgb, var(--primary-soft) 55%, var(--surface-2));
 }
 
 .month-day.is-selected {
@@ -1761,18 +1765,18 @@ code {
 
 /* "24h | 2" on one line; wraps back to two when the cell is too narrow. */
 .month-stat + .month-stat {
-  margin-left: 2px;
-  padding-left: 2px;
+  margin-left: 4px;
+  padding-left: 4px;
   border-left: 1px solid color-mix(in srgb, var(--ink-3) 45%, transparent);
 }
 
 .month-stat {
   display: inline-flex;
   align-items: center;
-  gap: 1px;
-  font-size: 9px;
+  gap: 2px;
+  font-size: 8px;
   font-weight: 800;
-  line-height: 11px;
+  line-height: 10px;
   color: var(--primary-text);
   font-variant-numeric: tabular-nums;
 }

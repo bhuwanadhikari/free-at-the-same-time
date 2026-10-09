@@ -119,7 +119,7 @@ export function CreateGroupSheet({
 
         <p className="note">
           <Info size={16} aria-hidden="true" />
-          Everyone you selected joins immediately — there are no invitations. Anyone can leave at any time.
+          Everyone you selected joins immediately, with no invitations. Anyone can leave at any time.
         </p>
 
         {error && (
@@ -169,7 +169,7 @@ export function OverlapSummary({
         <Handshake size={20} aria-hidden="true" />
         <span>
           <strong>Possible {describeWindows(overlap.tentative, tz, anchorDate)}</strong>
-          <span>Time needs confirming — {flexibleNames.join(', ')} said “free whole day”.</span>
+          <span>Time needs confirming: {flexibleNames.join(', ')} said “free whole day”.</span>
         </span>
       </div>
     );
@@ -179,7 +179,7 @@ export function OverlapSummary({
       <MessagesSquare size={20} aria-hidden="true" />
       <span>
         <strong>No time that works for everyone</strong>
-        <span>You can still start a discussion group — it just isn’t a confirmed match.</span>
+        <span>You can still start a discussion group, it just isn’t a confirmed match.</span>
       </span>
     </div>
   );
