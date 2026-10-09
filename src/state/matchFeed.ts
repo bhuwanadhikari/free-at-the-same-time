@@ -1,40 +1,32 @@
 import { onSnapshot } from 'firebase/firestore';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { db } from '../firebase';
-import { DAY_MS } from '../lib/intervals';
 import { MAX_ENTRY_SPAN_MS, type AvailabilityEntry } from '../lib/matching';
 import { MATCH_MAX_LIMIT, MATCH_PAGE_SIZE, entryFromData, matchFeedQuery } from '../services/availability';
 import { errorMessage } from '../services/errors';
 
-const WINDOW_STEP_DAYS = 14;
-const MAX_WINDOW_DAYS = 84;
-
 export interface MatchFeed {
-  /** My upcoming entries inside the current date window. */
-  myDays: AvailabilityEntry[];
   others: AvailabilityEntry[];
   state: 'idle' | 'loading' | 'ready' | 'error';
   error: string | null;
-  /** True once every entry in the window has been downloaded. */
+  /** True once every entry in range has been downloaded. */
   exhausted: boolean;
   /** Whether the results for one of my days are known to be complete. */
   isComplete: (mine: AvailabilityEntry) => boolean;
   canLoadMore: boolean;
-  /** "more results" or "later dates" — what the next load will fetch. */
-  nextLoad: 'more' | 'later' | null;
   hitLimit: boolean;
   loadMore: () => void;
   retry: () => void;
 }
 
 /**
- * Live, bounded query for other people's published availability around my
- * own upcoming days. Grows by pages (Load more), then by later date windows.
+ * Live, bounded query for other people's published availability around
+ * `myDays` (e.g. my upcoming days in the month on screen). Grows by pages.
+ * Changing `resetKey` starts again from one page.
  */
-export function useMatchFeed(myUpcoming: readonly AvailabilityEntry[]): MatchFeed {
+export function useMatchFeed(myDays: readonly AvailabilityEntry[], resetKey: string): MatchFeed {
   // Fixed per visit so the query (and its billing) doesn't churn every minute.
   const [anchor, setAnchor] = useState(() => Date.now());
-  const [windowDays, setWindowDays] = useState(WINDOW_STEP_DAYS);
   const [limitN, setLimitN] = useState(MATCH_PAGE_SIZE);
   const [others, setOthers] = useState<AvailabilityEntry[]>([]);
   const [state, setState] = useState<MatchFeed['state']>('idle');
@@ -43,9 +35,7 @@ export function useMatchFeed(myUpcoming: readonly AvailabilityEntry[]): MatchFee
   const [frontierMs, setFrontierMs] = useState(0);
   const [attempt, setAttempt] = useState(0);
 
-  const windowEnd = anchor + windowDays * DAY_MS;
-  const myDays = useMemo(() => myUpcoming.filter((e) => e.startMs < windowEnd), [myUpcoming, windowEnd]);
-  const hasLater = myUpcoming.length > myDays.length;
+  useEffect(() => setLimitN(MATCH_PAGE_SIZE), [resetKey]);
 
   // Plain numbers so the listener only restarts when the bounds really change.
   const from = myDays.length ? Math.max(anchor, Math.min(...myDays.map((e) => e.startMs))) : 0;
@@ -75,14 +65,9 @@ export function useMatchFeed(myUpcoming: readonly AvailabilityEntry[]): MatchFee
     );
   }, [from, to, limitN, attempt]);
 
-  const canPageMore = !exhausted && limitN < MATCH_MAX_LIMIT;
-  const canWiden = hasLater && windowDays < MAX_WINDOW_DAYS;
-  const nextLoad = canPageMore ? 'more' : exhausted && canWiden ? 'later' : null;
+  const canLoadMore = !exhausted && limitN < MATCH_MAX_LIMIT;
 
-  const loadMore = useCallback(() => {
-    if (nextLoad === 'more') setLimitN((n) => Math.min(n + MATCH_PAGE_SIZE, MATCH_MAX_LIMIT));
-    else if (nextLoad === 'later') setWindowDays((d) => Math.min(d + WINDOW_STEP_DAYS, MAX_WINDOW_DAYS));
-  }, [nextLoad]);
+  const loadMore = useCallback(() => setLimitN((n) => Math.min(n + MATCH_PAGE_SIZE, MATCH_MAX_LIMIT)), []);
 
   const retry = useCallback(() => {
     setError(null);
@@ -96,14 +81,12 @@ export function useMatchFeed(myUpcoming: readonly AvailabilityEntry[]): MatchFee
   );
 
   return {
-    myDays,
     others,
     state,
     error,
     exhausted,
     isComplete,
-    canLoadMore: nextLoad !== null,
-    nextLoad,
+    canLoadMore,
     hitLimit: !exhausted && limitN >= MATCH_MAX_LIMIT,
     loadMore,
     retry,

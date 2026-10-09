@@ -2,7 +2,7 @@
 
 A mobile-first PWA for finding people who are free at the same time and starting a plain-text group chat to make plans.
 
-**Core journey:** Google sign-in → publish availability → discover matches → select people → create a group (everyone joins immediately) → send text → leave when you want.
+**Core journey:** Google sign-in → tap or drag your free hours → see who shares them on the Matches timeline → pick people and hours → open a group chat (everyone joins immediately) → send text → leave when you want.
 
 - React 19 + TypeScript + Vite 8, installable PWA (vite-plugin-pwa / Workbox)
 - Firebase Authentication (Google only) and Cloud Firestore (data + realtime chat)
@@ -84,7 +84,7 @@ npm run typecheck
 **Sign-in note:** in a normal browser tab the app signs in with a popup and falls back to a redirect if the popup is blocked.
 
 ### Installing the app
-- **Android / Chrome / Edge:** Profile → *Install*, or browser menu → *Install app*.
+- **Android / Chrome / Edge:** your avatar (top right) → *Install*, or browser menu → *Install app*.
 - **iPhone / iPad:** in Safari or Chrome, Share → *Add to Home Screen* (in Safari on iOS 26, Share is under the ⋯ menu).
 - **Desktop Chrome/Edge:** the install icon in the address bar.
 
@@ -95,7 +95,7 @@ npm run typecheck
 | Path | Who can read | Who can write | Fields |
 |---|---|---|---|
 | `profiles/{uid}` | any signed-in user, **by id only** (no listing) | owner | `displayName` (1–40 chars, single line), `createdAt`, `updatedAt` |
-| `settings/{uid}` | owner | owner | `timezone`, `publishConsentAt?`, `createdAt`, `updatedAt` |
+| `settings/{uid}` | owner | owner | `timezone`, `publishConsentAt?`, `weekly?` (≤ 28 repeats), `weeklyThrough?`, `createdAt`, `updatedAt` |
 | `availability/{uid}_{YYYY-MM-DD}` | any signed-in user if `published == true`; owner always | owner | see below |
 | `groups/{groupId}` | active members | create: anyone (validated); update: self-removal or activity bump only | `name`, `createdBy`, `memberIds` (active), `originalMemberIds`, `createdAt`, `lastMessageAt` |
 | `groups/{groupId}/messages/{messageId}` | active members | create: active members, as themselves | `senderId`, `text` (1–2000), `createdAt` |
@@ -107,7 +107,7 @@ Email addresses are never written to Firestore.
 ```
 uid, date: "2026-10-10", tz: "Europe/Berlin",
 kind: "flexible" | "hours",
-ranges: [{ start: "22:00", end: "02:00", startAt: Timestamp, endAt: Timestamp }],   // empty for flexible
+ranges: [{ start: "22:00", end: "02:00", startAt: Timestamp, endAt: Timestamp }],   // ≤ 8; empty for flexible
 startAt, endAt: Timestamp,    // flexible = that local day's span; hours = earliest start / latest end
 published: true, updatedAt: serverTimestamp
 ```
@@ -115,18 +115,21 @@ published: true, updatedAt: serverTimestamp
 - Wall-clock times *and* exact instants are stored, together with the IANA time zone.
 - An end time at or before the start means the next day (`22:00 → 02:00`).
 - Daylight-saving days are measured in real elapsed time (23h/25h). Times skipped by a DST change are rejected.
-- A flexible day is stored as the day's span but **never treated as confirmed hours**: matches against it are labelled “time needs confirming”.
+- **Free whole day** is stored as `flexible`: the day's span, but **never treated as confirmed hours**, so matches against it are labelled “time needs confirming”.
+- At most **8 separate ranges** per day. The rules check every range, and 9 is the most that fits Firestore's budget of 1,000 evaluated expressions per request; the app blocks a 9th block as you tap.
+- The Availability grid edits hours, saving each day about 400 ms after your last tap (one write per day). The first save asks for publishing consent.
+
+**Weekly repeats** (“I'm free from 3 PM to 4 PM every Friday”) live in the owner-only `settings.weekly` as `{ weekday: 1–7, start, end }` (minutes in the day). Saving one also writes those hours onto every matching date in the 90-day planning horizon, so others see ordinary availability entries and matching needs no changes. As days pass, the app extends repeats onto newly reachable dates once per visit, tracked by `settings.weeklyThrough`; dates already covered are never rewritten, so a one-off change to a single Friday sticks.
 
 **Indexes** (`firestore.indexes.json`): `availability(published, endAt)` for discovery, `availability(uid, endAt)` for your own days, `groups(memberIds array-contains, lastMessageAt desc)` for the chat list.
 
 ## 5. How matching works (in the browser)
 
 1. Load your own upcoming entries (≤ 120).
-2. Query others' **published** entries whose `endAt` falls within your entries' window plus 50 hours (the longest span an entry can cover). The query is ordered by `endAt`, limited to 50 at a time (up to 300), and covers 14 days of your availability at a time. **Load more** fetches the next page, then later dates. The UI only says “that's everyone” once the query is exhausted.
-3. For each of your days, intersect your windows with each person's windows (≥ 30 minutes):
-   - both gave hours → **Shared hours** with the exact intersection
-   - anyone flexible → **time needs confirming**, showing the possible window
-4. When you select several people, the overlap is recomputed **across everyone at once**: pairwise overlaps don't imply a group overlap. With no common window you can still create a discussion group; it isn't labelled a match.
+2. Query others' **published** entries whose `endAt` falls within your entries' window plus 50 hours (the longest span an entry can cover). The query is ordered by `endAt`, limited to 50 at a time (up to 300), and covers your availability in the **month shown on the calendar**. **Load more** fetches the next page. The UI only says “no one else is free” once the query is exhausted.
+3. For each of your days, intersect your windows with each person's windows (≥ 30 minutes). The day's timeline lists you first, then everyone who shares at least one hour with you. An hour counts as free when at least half of it is covered, measured in your time zone (DST days keep 24 wall-clock columns).
+4. Tapping someone's free hour starts a match (you + them, that hour). Tapping another hour or person grows it when **everyone** is free across the wider span; otherwise the match starts over at the new cell. Tapping a ticked cell takes that person out.
+5. The confirmation sheet recomputes the overlap **across everyone at once**, clipped to the chosen hours: pairwise overlaps don't imply a group overlap. If anyone only said “free whole day”, the time is labelled as needing confirmation.
 
 Match results are only a UI aid. Authorization comes entirely from the Security Rules.
 
@@ -153,10 +156,11 @@ Deny by default. The rules enforce:
 ## 8. Project layout
 
 ```
-src/lib/          pure logic: intervals, time zones, availability building, matching, links, validation
+src/lib/          pure logic: intervals, time zones, availability building, hour slots + weekly repeats, matching, links, validation
 src/services/     Firestore access (availability, profiles, groups, messages, error messages)
 src/state/        session, shared listeners, match feed, local "seen" markers, toasts
-src/screens/      Availability, Day editor, Matches, Create group, Chats, Chat, Profile, Sign-in, Onboarding
+src/screens/      Availability (day + hour scrollers), Slot sheet (edit + weekly repeat), Matches (calendar + timeline), Create group, Chats, Chat, Profile, Sign-in, Onboarding
+src/components/   App chrome (top bar, nav), Day scroller, Hour scroller, sheets, shared UI
 firestore.rules   Security Rules        firestore.indexes.json   composite indexes
 tests/unit/       Vitest unit tests     tests/rules/             emulator tests for rules + services
 scripts/          icon generation, emulator seeding

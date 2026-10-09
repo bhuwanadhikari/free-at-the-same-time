@@ -1,33 +1,42 @@
-import { Info } from 'lucide-react';
+import { CircleCheck, Clock, Handshake, Info, MessagesSquare } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { Sheet } from '../components/Sheet';
 import { Avatar } from '../components/ui';
 import { db } from '../firebase';
+import { describeWindows } from '../lib/describe';
 import type { Overlap } from '../lib/matching';
-import { formatDayLabel } from '../lib/time';
+import { formatDayLabel, formatLongDay } from '../lib/time';
 import { GROUP_NAME_MAX } from '../lib/validation';
 import { errorMessage } from '../services/errors';
-import { createGroup, newGroupId } from '../services/groups';
+import { createGroup, hasGroup, slotGroupId } from '../services/groups';
 import type { PublicProfile } from '../services/profiles';
 import { useOnline } from '../state/hooks';
 import { useReadySession } from '../state/session';
 import { useToast } from '../state/toast';
-import { OverlapSummary } from './MatchesScreen';
+
+const formatClock = (h: number) => `${String(h).padStart(2, '0')}:00`;
+
+type Profiles = Record<string, PublicProfile | null | undefined>;
 
 export function CreateGroupSheet({
   date,
   selected,
   profiles,
   overlap,
+  fromHour,
+  toHour,
   tz,
   onClose,
   onCreated,
 }: {
   date: string;
   selected: string[];
-  profiles: Record<string, PublicProfile | null | undefined>;
+  profiles: Profiles;
   overlap: Overlap;
+  /** The hours picked on the timeline: [fromHour, toHour), 24-hour clock. */
+  fromHour: number;
+  toHour: number;
   tz: string;
   onClose: () => void;
   onCreated: () => void;
@@ -36,10 +45,8 @@ export function CreateGroupSheet({
   const navigate = useNavigate();
   const toast = useToast();
   const online = useOnline();
-  // One id per sheet: repeated taps can't create duplicates, but opening the
-  // sheet again makes an intentionally separate group.
-  const [groupId] = useState(() => newGroupId(db));
-  const [name, setName] = useState(`${formatDayLabel(date)} plans`);
+  const when = `${formatClock(fromHour)} - ${formatClock(toHour)}`;
+  const [name, setName] = useState(`${formatDayLabel(date)} | ${when}`);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,10 +60,18 @@ export function CreateGroupSheet({
     setBusy(true);
     setError(null);
     try {
-      await createGroup(db, { groupId, creatorUid: user.uid, name, memberIds: selected });
+      // Same people + same slot = same id, so a repeat opens the existing chat.
+      const slotId = await slotGroupId({ memberIds: [user.uid, ...selected], date, fromHour, toHour, tz });
+      if (await hasGroup(db, slotId, user.uid)) {
+        onCreated();
+        toast('You already have a chat for this time.', 'info');
+        navigate(`/chats/${slotId}`);
+        return;
+      }
+      await createGroup(db, { groupId: slotId, creatorUid: user.uid, name, memberIds: selected });
       onCreated();
       toast('Chat created. Everyone can message right away.');
-      navigate(`/chats/${groupId}`);
+      navigate(`/chats/${slotId}`);
     } catch (err) {
       setError(errorMessage(err));
       setBusy(false);
@@ -64,8 +79,13 @@ export function CreateGroupSheet({
   }
 
   return (
-    <Sheet open onClose={busy ? () => {} : onClose} title="New group chat">
+    <Sheet open onClose={busy ? () => {} : onClose} title="Open a group chat">
       <form className="stack" onSubmit={submit} noValidate>
+        <p className="when-chip">
+          <Clock size={16} aria-hidden="true" />
+          {formatLongDay(date)} · {when}
+        </p>
+
         <div className="field">
           <label htmlFor="group-name">Chat name</label>
           <input
@@ -109,9 +129,58 @@ export function CreateGroupSheet({
         )}
 
         <button type="submit" className="btn btn-primary btn-block" disabled={busy || !online} aria-busy={busy}>
-          {busy ? 'Creating…' : 'Create chat'}
+          {busy ? 'Opening…' : 'Open group chat'}
         </button>
       </form>
     </Sheet>
+  );
+}
+
+export function OverlapSummary({
+  overlap,
+  profiles,
+  selfUid,
+  tz,
+  anchorDate,
+}: {
+  overlap: Overlap;
+  profiles: Profiles;
+  selfUid: string;
+  tz: string;
+  anchorDate: string;
+}) {
+  if (overlap.status === 'confirmed') {
+    return (
+      <div className="summary summary--ok" role="status">
+        <CircleCheck size={20} aria-hidden="true" />
+        <span>
+          <strong>Everyone’s free {describeWindows(overlap.confirmed, tz, anchorDate)}</strong>
+          <span>Confirmed overlap for the whole group.</span>
+        </span>
+      </div>
+    );
+  }
+  if (overlap.status === 'tentative') {
+    const flexibleNames = [...new Set(overlap.tentative.flatMap((w) => w.flexible))].map((uid) =>
+      uid === selfUid ? 'you' : (profiles[uid]?.displayName ?? 'someone'),
+    );
+    return (
+      <div className="summary summary--warn" role="status">
+        <Handshake size={20} aria-hidden="true" />
+        <span>
+          <strong>Possible {describeWindows(overlap.tentative, tz, anchorDate)}</strong>
+          <span>Time needs confirming — {flexibleNames.join(', ')} said “free whole day”.</span>
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="summary summary--info" role="status">
+      <MessagesSquare size={20} aria-hidden="true" />
+      <span>
+        <strong>No time that works for everyone</strong>
+        <span>You can still start a discussion group — it just isn’t a confirmed match.</span>
+      </span>
+    </div>
   );
 }

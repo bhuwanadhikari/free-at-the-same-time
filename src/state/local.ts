@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-// Per-device conveniences only (which chats you've opened). Never authoritative.
+// Per-device conveniences only (which chats you've opened, tips seen). Never authoritative.
 const PREFIX = 'fatst:';
 const EVENT = 'fatst-local-change';
 
@@ -43,6 +43,15 @@ export function markSeen(uid: string, groupId: string, atMs: number): void {
 
 export function forgetGroup(uid: string, groupId: string): void {
   write(seenKey(uid, groupId), null);
+}
+
+/** One-time tips, e.g. the hour grid's "long-press and drag" hint. */
+export function hasSeenTip(tip: string): boolean {
+  return read(`tip:${tip}`) === '1';
+}
+
+export function markTipSeen(tip: string): void {
+  write(`tip:${tip}`, '1');
 }
 
 let version = 0;

@@ -67,6 +67,27 @@ export async function publishEntries(db: Firestore, entries: readonly Availabili
   await batch.commit();
 }
 
+export interface DayWrite {
+  date: string;
+  /** null deletes the day's document. */
+  entry: AvailabilityEntry | null;
+}
+
+/**
+ * Writes several days, plus optional settings fields, in one atomic batch.
+ * Only delete days that exist: the rules can't authorize deleting a missing doc.
+ */
+export async function writeDays(db: Firestore, uid: string, days: readonly DayWrite[], settings?: DocumentData): Promise<void> {
+  const batch = writeBatch(db);
+  for (const { date, entry } of days) {
+    const ref = doc(col(db), availabilityDocId(uid, date));
+    if (entry) batch.set(ref, entryToDoc(entry));
+    else batch.delete(ref);
+  }
+  if (settings) batch.update(doc(db, 'settings', uid), { ...settings, updatedAt: serverTimestamp() });
+  await batch.commit();
+}
+
 export async function removeEntries(db: Firestore, uid: string, dates: readonly string[]): Promise<void> {
   const batch = writeBatch(db);
   for (const date of dates) batch.delete(doc(col(db), availabilityDocId(uid, date)));

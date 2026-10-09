@@ -8,12 +8,14 @@ import { ChatScreen } from './screens/ChatScreen';
 import { ChatsScreen } from './screens/ChatsScreen';
 import { MatchesScreen } from './screens/MatchesScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
+import { PrivacyScreen } from './screens/PrivacyScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { SignInScreen } from './screens/SignInScreen';
 import { DataProvider, useData } from './state/data';
 import { getLastSeen, useLocalVersion } from './state/local';
 import { SessionProvider, useSession, type Session } from './state/session';
 import { ToastProvider } from './state/toast';
+import { useWeeklyTopUp } from './state/weekly';
 
 export default function App() {
   return (
@@ -72,7 +74,10 @@ function MainRoutes({ uid }: { uid: string }) {
   const location = useLocation();
   const { groups } = useData();
   const localVersion = useLocalVersion();
+  useWeeklyTopUp();
   const inChat = /^\/chats\/[^/]+/.test(location.pathname);
+  // The availability planner fills the screen and scrolls inside its columns.
+  const fill = location.pathname === '/availability';
   const chatsUnread = useMemo(
     () => groups.some((g) => g.lastMessageAtMs > getLastSeen(uid, g.id)),
     // localVersion changes whenever a chat is marked as seen.
@@ -80,7 +85,7 @@ function MainRoutes({ uid }: { uid: string }) {
   );
 
   return (
-    <div className={inChat ? 'app app--chat' : 'app'}>
+    <div className={inChat ? 'app app--chat' : fill ? 'app app--fill' : 'app'}>
       <Routes>
         <Route path="/" element={<Navigate to="/availability" replace />} />
         <Route path="/availability" element={<AvailabilityScreen />} />
@@ -88,6 +93,7 @@ function MainRoutes({ uid }: { uid: string }) {
         <Route path="/chats" element={<ChatsScreen />} />
         <Route path="/chats/:groupId" element={<ChatRoute />} />
         <Route path="/profile" element={<ProfileScreen />} />
+        <Route path="/profile/privacy" element={<PrivacyScreen />} />
         <Route path="*" element={<Navigate to="/availability" replace />} />
       </Routes>
       {!inChat && <BottomNav chatsUnread={chatsUnread} />}

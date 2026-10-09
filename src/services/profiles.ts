@@ -1,4 +1,6 @@
 import { Timestamp, doc, getDoc, serverTimestamp, updateDoc, writeBatch, type DocumentData, type Firestore } from 'firebase/firestore';
+import { parseWeeklyRules, type WeeklyRule } from '../lib/slots';
+import { DATE_RE } from '../lib/time';
 import { cleanName, validateDisplayName } from '../lib/validation';
 
 export interface PublicProfile {
@@ -8,6 +10,10 @@ export interface PublicProfile {
 export interface UserSettings {
   timezone: string;
   publishConsentAt: number | null;
+  /** Repeating free times. Private; their dates are published as ordinary entries. */
+  weekly: WeeklyRule[];
+  /** Last date the weekly repeats were copied onto. */
+  weeklyThrough: string | null;
 }
 
 export function profileFromData(data: DocumentData | undefined): PublicProfile | null {
@@ -17,7 +23,13 @@ export function profileFromData(data: DocumentData | undefined): PublicProfile |
 export function settingsFromData(data: DocumentData | undefined): UserSettings | null {
   if (!data || typeof data.timezone !== 'string') return null;
   const consent = data.publishConsentAt;
-  return { timezone: data.timezone, publishConsentAt: consent instanceof Timestamp ? consent.toMillis() : null };
+  const through = data.weeklyThrough;
+  return {
+    timezone: data.timezone,
+    publishConsentAt: consent instanceof Timestamp ? consent.toMillis() : null,
+    weekly: parseWeeklyRules(data.weekly),
+    weeklyThrough: typeof through === 'string' && DATE_RE.test(through) ? through : null,
+  };
 }
 
 function checkedName(raw: string): string {
@@ -53,9 +65,8 @@ export async function updateTimezone(db: Firestore, uid: string, timezone: strin
   await updateDoc(doc(db, 'settings', uid), { timezone, updatedAt: serverTimestamp() });
 }
 
-export async function recordPublishConsent(db: Firestore, uid: string): Promise<void> {
-  await updateDoc(doc(db, 'settings', uid), { publishConsentAt: serverTimestamp(), updatedAt: serverTimestamp() });
-}
+/** Settings fields that record consent, for writing in the same batch as a first publish. */
+export const consentFields = (): DocumentData => ({ publishConsentAt: serverTimestamp() });
 
 // ---------- Profile cache (other people's display names) ----------
 

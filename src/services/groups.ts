@@ -51,6 +51,36 @@ export function newGroupId(db: Firestore): string {
   return doc(collection(db, 'groups')).id;
 }
 
+/**
+ * Stable id for "these people at this time": the same members, day, hours and
+ * zone always map to the same group, so a repeat can open the existing chat.
+ */
+export async function slotGroupId(input: {
+  memberIds: readonly string[];
+  date: string;
+  fromHour: number;
+  toHour: number;
+  tz: string;
+}): Promise<string> {
+  const key = [[...new Set(input.memberIds)].sort().join(','), input.date, input.fromHour, input.toHour, input.tz].join('|');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key));
+  return [...new Uint8Array(digest)]
+    .slice(0, 20)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/** True when the group already exists and the caller is still a member of it. */
+export async function hasGroup(db: Firestore, groupId: string, uid: string): Promise<boolean> {
+  try {
+    const snap = await getDoc(doc(db, 'groups', groupId));
+    return snap.exists() && Array.isArray(snap.get('memberIds')) && snap.get('memberIds').includes(uid);
+  } catch {
+    // Not readable (e.g. the caller left it): treat as absent.
+    return false;
+  }
+}
+
 const inFlight = new Map<string, Promise<void>>();
 
 /**

@@ -1,6 +1,7 @@
 import { MessageCircle, Sparkles } from 'lucide-react';
 import { Link } from 'react-router';
-import { EmptyState, GroupAvatar, InlineError, ScreenHeader, Spinner } from '../components/ui';
+import { TopBar } from '../components/AppChrome';
+import { EmptyState, GroupAvatar, InlineError, Spinner } from '../components/ui';
 import { formatRelative } from '../lib/time';
 import { useData } from '../state/data';
 import { useNow } from '../state/hooks';
@@ -15,7 +16,9 @@ export function ChatsScreen() {
 
   return (
     <main className="screen">
-      <ScreenHeader eyebrow="Chats" icon={MessageCircle} title="Your groups" subtitle="Plain text chats with people who are free when you are." />
+      <TopBar>
+        <h1 className="topbar-title">Chats</h1>
+      </TopBar>
 
       {groupsState === 'loading' && <Spinner label="Loading chats" />}
       {groupsState === 'error' && <InlineError message={groupsError ?? 'Couldn’t load chats.'} onRetry={retry} />}

@@ -1,6 +1,8 @@
-import { CircleUserRound, Download, Globe, LogOut, Pencil, Share, ShieldCheck, Smartphone } from 'lucide-react';
+import { ChevronRight, Download, Globe, LogOut, Pencil, Share, ShieldCheck, Smartphone } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
-import { Avatar, ScreenHeader } from '../components/ui';
+import { Link } from 'react-router';
+import { BackBar } from '../components/AppChrome';
+import { Avatar } from '../components/ui';
 import { db } from '../firebase';
 import { detectTimeZone, listTimeZones, shortZoneName } from '../lib/time';
 import { DISPLAY_NAME_MAX } from '../lib/validation';
@@ -61,7 +63,7 @@ export function ProfileScreen() {
 
   return (
     <main className="screen">
-      <ScreenHeader eyebrow="Profile" icon={CircleUserRound} title="You" />
+      <BackBar title="Profile" fallback="/availability" />
 
       <section className="card profile-card">
         <Avatar uid={user.uid} name={profile.displayName} size={76} />
@@ -128,18 +130,14 @@ export function ProfileScreen() {
 
       <InstallCard />
 
-      <section className="card stack info-card">
-        <h2 className="card-title">
-          <ShieldCheck size={20} aria-hidden="true" /> Privacy & limits
-        </h2>
-        <ul className="plain-list">
-          <li>Other signed-in users see your display name and published availability, including the time zone each day was set in.</li>
-          <li>Anyone with matching availability can add you to a group chat without an invitation. You can leave any group at any time.</li>
-          <li>There’s no server-side matching or spam filtering, so the app can’t verify why someone added you.</li>
-          <li>Chats are plain text. Updates show while the app is open; there are no notifications when it’s closed.</li>
-          <li>This runs on a free hosting plan with daily limits. If it hits them, things may pause until the next day.</li>
-        </ul>
-      </section>
+      <Link to="/profile/privacy" className="link-row">
+        <ShieldCheck size={22} aria-hidden="true" />
+        <span className="link-row-text">
+          <span className="link-row-name">Privacy & limits</span>
+          <span className="link-row-meta">Who sees what, and what the app can’t do</span>
+        </span>
+        <ChevronRight size={20} aria-hidden="true" />
+      </Link>
 
       <button type="button" className="btn btn-danger btn-block" onClick={() => void signOutNow()} disabled={signingOut}>
         <LogOut size={18} aria-hidden="true" /> {signingOut ? 'Signing out…' : 'Sign out'}

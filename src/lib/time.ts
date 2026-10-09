@@ -71,7 +71,7 @@ export function dateOf(ms: number, tz: string): LocalDate {
 
 // ---------- Formatting ----------
 
-function uses24h(): boolean {
+export function uses24h(): boolean {
   try {
     const cycle = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle;
     return cycle === 'h23' || cycle === 'h24';

@@ -2,8 +2,10 @@ import { MINUTE_MS, overlaps } from './intervals';
 import type { AvailabilityEntry, AvailabilityKind, TimeRange } from './matching';
 import { DATE_RE, TIME_RE, addDays, daySpan, formatWallTime, wallTimeToMs, type LocalDate } from './time';
 
-export const MAX_RANGES_PER_DAY = 4;
+/** Separate free blocks in one day. Mirrors firestore.rules, which can't afford to check more. */
+export const MAX_RANGES_PER_DAY = 8;
 export const MIN_RANGE_MS = 30 * MINUTE_MS;
+export const TOO_MANY_RANGES = `A day can have up to ${MAX_RANGES_PER_DAY} separate free blocks. Join some of them up.`;
 
 export interface RangeDraft {
   start: string;
@@ -52,7 +54,7 @@ export function buildEntry(uid: string, date: LocalDate, tz: string, draft: DayD
   }
 
   if (draft.ranges.length === 0) return { ok: false, error: 'Add at least one time range.' };
-  if (draft.ranges.length > MAX_RANGES_PER_DAY) return { ok: false, error: `Use up to ${MAX_RANGES_PER_DAY} time ranges per day.` };
+  if (draft.ranges.length > MAX_RANGES_PER_DAY) return { ok: false, error: TOO_MANY_RANGES };
 
   const ranges: TimeRange[] = [];
   for (const r of draft.ranges) {

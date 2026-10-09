@@ -13,8 +13,8 @@ import {
   where,
 } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
-import { entryToDoc, matchFeedQuery, myAvailabilityQuery, publishEntries, removeEntries } from '../../src/services/availability';
-import { createAccount, updateDisplayName } from '../../src/services/profiles';
+import { entryToDoc, matchFeedQuery, myAvailabilityQuery, publishEntries, removeEntries, writeDays } from '../../src/services/availability';
+import { consentFields, createAccount, updateDisplayName } from '../../src/services/profiles';
 import { asAdmin, dbAnon, dbAs, futureDate, makeEntry, setupEnv } from './env';
 
 let env: RulesTestEnvironment;
@@ -59,6 +59,17 @@ describe('profiles and settings', () => {
     await assertSucceeds(getDoc(doc(dbAs(env, 'bob'), 'profiles', 'alice')));
     await assertFails(getDocs(query(collection(dbAs(env, 'bob'), 'profiles'), limit(10))));
     await assertFails(getDoc(doc(dbAnon(env), 'profiles', 'alice')));
+  });
+
+  it('accepts weekly repeats in settings, within limits', async () => {
+    await createAccount(dbAs(env, 'alice'), 'alice', { displayName: 'Alice', timezone: 'Europe/London' });
+    const ref = doc(dbAs(env, 'alice'), 'settings', 'alice');
+    const rule = { weekday: 5, start: 900, end: 960 };
+    await assertSucceeds(updateDoc(ref, { weekly: [rule], weeklyThrough: futureDate(80), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { weekly: Array(29).fill(rule), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { weekly: 'every friday', updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { weeklyThrough: 'soon', updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(dbAs(env, 'bob'), 'settings', 'alice'), { weekly: [rule], updatedAt: serverTimestamp() }));
   });
 
   it('keeps settings (time zone, consent) private to the owner', async () => {
@@ -119,9 +130,35 @@ describe('availability', () => {
     await assertFails(setDoc(ref, { ...good, kind: 'flexible' }));
     await assertFails(setDoc(ref, { ...good, kind: 'weekly' }));
     await assertFails(setDoc(ref, { ...good, email: 'a@example.com' }));
-    await assertFails(setDoc(ref, { ...good, ranges: Array(5).fill(good.ranges[0]) }));
+    await assertFails(setDoc(ref, { ...good, ranges: Array(9).fill(good.ranges[0]) }));
     await assertFails(setDoc(ref, { ...good, ranges: [{ ...good.ranges[0], start: '25:00' }] }));
     await assertFails(setDoc(ref, { ...good, endAt: good.startAt }));
+  });
+
+  it('accepts up to 8 separate ranges in a day', async () => {
+    const everyOther = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({ start: `${String(i * 2).padStart(2, '0')}:00`, end: `${String(i * 2 + 1).padStart(2, '0')}:00` }));
+    const db = dbAs(env, 'alice');
+    await assertSucceeds(publishEntries(db, [makeEntry('alice', { kind: 'hours', ranges: everyOther(8) })]));
+    // A second write of the same day goes through the (costlier) update rule.
+    await assertSucceeds(publishEntries(db, [makeEntry('alice', { kind: 'hours', ranges: everyOther(8).reverse() })]));
+  });
+
+  it('writes days and settings together, deleting only existing days', async () => {
+    await createAccount(dbAs(env, 'alice'), 'alice', { displayName: 'Alice', timezone: 'Europe/London' });
+    const db = dbAs(env, 'alice');
+    const first = makeEntry('alice', evening, futureDate(5));
+    const second = makeEntry('alice', evening, futureDate(12));
+    await assertSucceeds(
+      writeDays(db, 'alice', [{ date: first.date, entry: first }, { date: second.date, entry: second }], {
+        ...consentFields(),
+        weekly: [{ weekday: 5, start: 1080, end: 1260 }],
+        weeklyThrough: futureDate(89),
+      }),
+    );
+    await assertSucceeds(writeDays(db, 'alice', [{ date: first.date, entry: null }]));
+    // The rules can't authorize deleting a document that isn't there.
+    await assertFails(writeDays(db, 'alice', [{ date: futureDate(20), entry: null }]));
   });
 
   it('rejects availability that has already ended or is too far ahead', async () => {

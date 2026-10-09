@@ -1,15 +1,51 @@
-import { CalendarHeart, CircleUserRound, MessageCircle, RefreshCw, Sparkles, WifiOff } from 'lucide-react';
+import { ArrowLeft, CalendarHeart, MessageCircle, RefreshCw, Sparkles, WifiOff } from 'lucide-react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { NavLink } from 'react-router';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useOnline } from '../state/hooks';
+import { useReadySession } from '../state/session';
+import { Avatar } from './ui';
 
 const NAV = [
   { to: '/availability', label: 'Availability', icon: CalendarHeart },
   { to: '/matches', label: 'Matches', icon: Sparkles },
   { to: '/chats', label: 'Chats', icon: MessageCircle },
-  { to: '/profile', label: 'Profile', icon: CircleUserRound },
 ] as const;
+
+/** Compact screen header; your profile always sits at the top right. */
+export function TopBar({ children }: { children?: ReactNode }) {
+  const { user, profile } = useReadySession();
+  return (
+    <header className="topbar">
+      <div className="topbar-main">{children}</div>
+      <Link to="/profile" className="topbar-profile" aria-label="Profile">
+        <Avatar uid={user.uid} name={profile.displayName} size={32} />
+      </Link>
+    </header>
+  );
+}
+
+/** Header for a pushed screen: back arrow plus title. */
+export function BackBar({ title, fallback }: { title: string; fallback: string }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (
+    <header className="topbar">
+      <div className="topbar-main">
+        <button
+          type="button"
+          className="icon-btn icon-btn--plain"
+          // Opened directly (no history in the app): go to the parent screen instead of leaving.
+          onClick={() => (location.key === 'default' ? navigate(fallback) : navigate(-1))}
+          aria-label="Back"
+        >
+          <ArrowLeft size={22} aria-hidden="true" />
+        </button>
+        <h1 className="topbar-title">{title}</h1>
+      </div>
+    </header>
+  );
+}
 
 export function BottomNav({ chatsUnread }: { chatsUnread: boolean }) {
   return (
@@ -17,7 +53,7 @@ export function BottomNav({ chatsUnread }: { chatsUnread: boolean }) {
       {NAV.map(({ to, label, icon: Icon }) => (
         <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           <span className="nav-icon">
-            <Icon size={22} strokeWidth={2.25} aria-hidden="true" />
+            <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
             {to === '/chats' && chatsUnread && <span className="nav-dot" />}
           </span>
           <span className="nav-label">

@@ -63,9 +63,11 @@ describe('buildEntry', () => {
 
   it('accepts touching ranges and limits the number of ranges', () => {
     expect(buildEntry('u1', '2026-10-10', LONDON, hours(['09:00', '10:00'], ['10:00', '11:00'])).ok).toBe(true);
-    expect(
-      buildEntry('u1', '2026-10-10', LONDON, hours(['01:00', '02:00'], ['03:00', '04:00'], ['05:00', '06:00'], ['07:00', '08:00'], ['09:00', '10:00'])).ok,
-    ).toBe(false);
+    // Separate one-hour ranges, every other hour.
+    const everyOther = (n: number) =>
+      Array.from({ length: n }, (_, i): [string, string] => [`${String(i * 2).padStart(2, '0')}:00`, `${String(i * 2 + 1).padStart(2, '0')}:00`]);
+    expect(buildEntry('u1', '2026-10-10', LONDON, hours(...everyOther(8))).ok).toBe(true);
+    expect(buildEntry('u1', '2026-10-10', LONDON, hours(...everyOther(9))).ok).toBe(false);
   });
 
   it('requires at least one range for specific hours', () => {

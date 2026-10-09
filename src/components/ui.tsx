@@ -45,34 +45,6 @@ export function Logo({ size = 36 }: { size?: number }) {
   return <img src="/favicon.svg" width={size} height={size} alt="" className="logo" />;
 }
 
-export function ScreenHeader({
-  eyebrow,
-  icon: Icon,
-  title,
-  subtitle,
-  action,
-}: {
-  eyebrow: string;
-  icon: LucideIcon;
-  title: ReactNode;
-  subtitle?: ReactNode;
-  action?: ReactNode;
-}) {
-  return (
-    <header className="screen-header">
-      <div className="screen-header-row">
-        <span className="eyebrow">
-          <Icon size={16} strokeWidth={2.5} aria-hidden="true" />
-          {eyebrow}
-        </span>
-        {action}
-      </div>
-      <h1>{title}</h1>
-      {subtitle && <p>{subtitle}</p>}
-    </header>
-  );
-}
-
 export function Spinner({ label = 'Loading' }: { label?: string }) {
   return (
     <span className="spinner" role="status">
