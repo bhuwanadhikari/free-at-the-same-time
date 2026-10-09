@@ -1,4 +1,4 @@
-import { CircleCheck, Clock, Handshake, Info, MessagesSquare } from 'lucide-react';
+import { CircleCheck, Clock, Handshake, MessagesSquare } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { Sheet } from '../components/Sheet';
@@ -115,12 +115,7 @@ export function CreateGroupSheet({
           </ul>
         </div>
 
-        <OverlapSummary overlap={overlap} profiles={profiles} selfUid={user.uid} tz={tz} anchorDate={date} />
-
-        <p className="note">
-          <Info size={16} aria-hidden="true" />
-          Everyone you selected joins immediately, with no invitations. Anyone can leave at any time.
-        </p>
+        <OverlapSummary overlap={overlap} tz={tz} anchorDate={date} />
 
         {error && (
           <p className="error-text" role="alert">
@@ -138,14 +133,10 @@ export function CreateGroupSheet({
 
 export function OverlapSummary({
   overlap,
-  profiles,
-  selfUid,
   tz,
   anchorDate,
 }: {
   overlap: Overlap;
-  profiles: Profiles;
-  selfUid: string;
   tz: string;
   anchorDate: string;
 }) {
@@ -161,15 +152,11 @@ export function OverlapSummary({
     );
   }
   if (overlap.status === 'tentative') {
-    const flexibleNames = [...new Set(overlap.tentative.flatMap((w) => w.flexible))].map((uid) =>
-      uid === selfUid ? 'you' : (profiles[uid]?.displayName ?? 'someone'),
-    );
     return (
       <div className="summary summary--warn" role="status">
         <Handshake size={20} aria-hidden="true" />
         <span>
           <strong>Possible {describeWindows(overlap.tentative, tz, anchorDate)}</strong>
-          <span>Time needs confirming: {flexibleNames.join(', ')} said “free whole day”.</span>
         </span>
       </div>
     );
